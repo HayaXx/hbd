@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            font-family: 'Fredoka One', cursive;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            margin: 20px;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            color: white;
+            font-size: 24px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            max-width: 600px;
+            perspective: 1000px;
+            margin: 20px;
+        }
+
+        .card {
+            aspect-ratio: 1;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card.matched {
+            animation: celebrate 0.5s ease-in-out;
+        }
+
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1) rotateY(180deg); }
+            50% { transform: scale(1.1) rotateY(180deg); }
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            font-size: 50px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            background: white;
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            transform: rotateY(180deg);
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #43cea2, #185a9d);
+            color: white;
+        }
+
+        #start-btn {
+            padding: 15px 40px;
+            font-size: 24px;
+            background: linear-gradient(45deg, #FF512F, #DD2476);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            margin: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            font-family: 'Fredoka One', cursive;
+        }
+
+        #start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .win-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(255,255,255,0.95);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+
+        .win-message.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f00;
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(360deg); }
+        }
+
+        .level-selector {
+            margin: 20px;
+            padding: 10px;
+            font-size: 18px;
+            border-radius: 10px;
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .combo-counter {
+            position: fixed;
+            font-size: 40px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎉 Birthday Match Deluxe 🎉</h1>
+    </div>
+    <div class="stats">
+        <div>🎯 Skor: <span id="score">0</span></div>
+        <div>⏱️ Waktu: <span id="time">0</span>s</div>
+        <div>🔄 Combo: <span id="combo">0</span>x</div>
+    </div>
+    <select class="level-selector" id="levelSelect">
+        <option value="8">Mudah (4x4)</option>
+        <option value="12">Sedang (4x6)</option>
+        <option value="16">Sulit (4x8)</option>
+    </select>
+    <div class="game-board" id="gameBoard"></div>
+    <button id="start-btn">Mulai Game Baru</button>
+    <div class="win-message" id="winMessage">
+        <h2>🎊 SELAMAT! 🎊</h2>
+        <p>Skor Akhir: <span id="finalScore">0</span></p>
+        <p>Waktu: <span id="finalTime">0</span> detik</p>
+        <p>Combo Terbaik: <span id="finalCombo">0</span>x</p>
+    </div>
+
+    <script>
+        const emojis = ['🎂', '🎈', '🎁', '🎉', '🍰', '🎊', '🎵', '🎪', '🎯', '🎨', '🎭', '🎡', '🎢', '🎠', '🎮', '🎲'];
+        let cards = [];
+        let flippedCards = [];
+        let score = 0;
+        let combo = 0;
+        let bestCombo = 0;
+        let gameStarted = false;
+        let timer;
+        let seconds = 0;
+        let matchedPairs = 0;
+
+        function createConfetti() {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+
+        function showComboEffect(x, y, combo) {
+            const element = document.createElement('div');
+            element.className = 'combo-counter';
+            element.textContent = `${combo}x Combo!`;
+            element.style.left = x + 'px';
+            element.style.top = y + 'px';
+            document.body.appendChild(element);
+
+            requestAnimationFrame(() => {
+                element.style.transform = 'translateY(-50px)';
+                element.style.opacity = '0';
+            });
+
+            setTimeout(() => element.remove(), 1000);
+        }
+
+        function createBoard() {
+    const level = parseInt(document.getElementById('levelSelect').value);
+    const shuffledEmojis = [...emojis.slice(0, level), ...emojis.slice(0, level)]
+        .sort(() => Math.random() - 0.5);
+    
+    gameBoard.style.display = "grid";
+    gameBoard.style.gridTemplateColumns = `repeat(4, 1fr)`;
+    gameBoard.style.gap = "100px"; // Tambahkan jarak antar kartu
+    gameBoard.innerHTML = '';
+    
+    shuffledEmojis.forEach((emoji, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="card-front">${emoji}</div>
+            <div class="card-back">🎮</div>
+        `;
+        card.dataset.index = index;
+        card.dataset.emoji = emoji;
+        card.addEventListener('click', flipCard);
+        gameBoard.appendChild(card);
+    });
+}
+
+
+        function flipCard(event) {
+            if (!gameStarted) {
+                startGame();
+            }
+
+            const card = this;
+            if (card.classList.contains('flipped') || flippedCards.length >= 2) return;
+
+            card.classList.add('flipped');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                checkMatch(event);
+            }
+        }
+
+        function checkMatch(event) {
+            const [card1, card2] = flippedCards;
+            const match = card1.dataset.emoji === card2.dataset.emoji;
+
+            setTimeout(() => {
+                if (match) {
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    matchedPairs++;
+                    combo++;
+                    if (combo > bestCombo) bestCombo = combo;
+                    
+                    const rect = card1.getBoundingClientRect();
+                    showComboEffect(rect.left, rect.top, combo);
+                    
+                    score += combo * 100;
+                    document.getElementById('score').textContent = score;
+                    document.getElementById('combo').textContent = combo;
+
+                    if (matchedPairs === parseInt(document.getElementById('levelSelect').value)) {
+                        endGame();
+                    }
+                } else {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    combo = 0;
+                    document.getElementById('combo').textContent = combo;
+                }
+                flippedCards = [];
+            }, 1000);
+        }
+
+        function startGame() {
+            gameStarted = true;
+            score = 0;
+            combo = 0;
+            bestCombo = 0;
+            matchedPairs = 0;
+            seconds = 0;
+            document.getElementById('score').textContent = score;
+            document.getElementById('combo').textContent = combo;
+            document.getElementById('time').textContent = seconds;
+            document.getElementById('winMessage').classList.remove('show');
+
+            if (timer) clearInterval(timer);
+            timer = setInterval(() => {
+                seconds++;
+                document.getElementById('time').textContent = seconds;
+            }, 1000);
+        }
+
+        function endGame() {
+            clearInterval(timer);
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalTime').textContent = seconds;
+            document.getElementById('finalCombo').textContent = bestCombo;
+            document.getElementById('winMessage').classList.add('show');
+            createConfetti();
+            gameStarted = false;
+        }
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            createBoard();
+            startGame();
+        });
+
+        document.getElementById('levelSelect').addEventListener('change', () => {
+            createBoard();
+            startGame();
+        });
+
+        createBoard();
+    </script>
+</body>
+</html>

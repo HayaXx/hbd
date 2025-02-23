@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday Surprise</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        .envelope {
+            position: relative;
+            width: 220px;
+            height: 150px;
+            background: #ff6f61;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.3s ease-in-out;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .envelope:hover {
+            transform: scale(1.1);
+        }
+        .flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 75px;
+            background: #ff4f5a;
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            transition: transform 0.6s ease-in-out;
+            transform-origin: top;
+        }
+        .message {
+            position: absolute;
+            width: 200px;
+            height: 120px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 5px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .message p {
+            font-size: 18px;
+            color: #d6336c;
+            text-align: center;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .open-btn {
+            padding: 10px 20px;
+            background: #ff4081;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s ease-in-out, transform 0.2s;
+            font-size: 14px;
+        }
+        .open-btn:hover {
+            background: #d6336c;
+            transform: scale(1.1);
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #fdd835;
+            opacity: 0.8;
+            border-radius: 50%;
+            animation: fall 1.5s linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0); }
+            100% { transform: translateY(100vh) rotate(720deg); }
+        }
+        .countdown-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff4081;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="envelope" onclick="openEnvelope()">
+        <div class="flap" id="flap"></div>
+        <div class="message" id="message">
+            <p>Buka surat ini</p>
+            <button class="open-btn" id="showSurprise" onclick="showBirthdayMessage(event)">Buka</button>
+            <audio id="birthday-song" src="music.mp3" preload="auto"></audio>
+            <p id="countdown" class="countdown-text">3</p>
+        </div>
+    </div>
+
+    <script>
+       document.addEventListener('DOMContentLoaded', function() {
+            var audio = document.getElementById('birthday-song');
+            audio.play().catch(() => {
+                console.log("Autoplay dicegah oleh browser, interaksi pengguna diperlukan.");
+            });
+        });
+        function openEnvelope() {
+            document.getElementById('flap').style.transform = 'rotateX(180deg)';
+            setTimeout(() => {
+                let message = document.getElementById('message');
+                message.style.opacity = '1';
+                message.style.transform = 'translateY(0)';
+            }, 400);
+        }
+        
+        function showBirthdayMessage(event) {
+            event.stopPropagation();
+            let countdown = 3;
+            let countdownText = document.getElementById('countdown');
+            countdownText.style.display = 'block';
+            
+            let interval = setInterval(() => {
+                countdown--;
+                countdownText.textContent = countdown;
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                    window.location.href = 'hbd.html';
+                }
+            }, 1000);
+            
+            createConfetti();
+        }
+        
+        function createConfetti() {
+            for (let i = 0; i < 30; i++) {
+                let confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                document.body.appendChild(confetti);
+                confetti.style.left = Math.random() * window.innerWidth + 'px';
+                confetti.style.animationDuration = (Math.random() * 2 + 1) + 's';
+                confetti.style.background = ['#fdd835', '#ff4081', '#3f51b5', '#4caf50'][Math.floor(Math.random() * 4)];
+                
+                setTimeout(() => confetti.remove(), 2000);
+            }
+        }
+    </script>
+</body>
+</html>
